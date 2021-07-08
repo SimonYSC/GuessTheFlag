@@ -7,14 +7,18 @@
 
 import SwiftUI
 
+enum AlertType {
+    case score, restart
+}
+
 struct ContentView: View {
     @State private var countries = ["Estonia", "France", "Germany", "Ireland", "Italy", "Nigeria", "Monaco", "Poland", "Russia", "Spain", "UK", "US"].shuffled()
     
     @State private var correctAnswer = Int.random(in: 0...2)
-    
-    @State private var showingScore = false
-    @State private var showRestart = false
+    @State private var showAlert = false
+    @State private var activeAlert = AlertType.score
     @State private var scoreTitle = ""
+    @State private var scoreMessage = ""
     @State private var score = 0
     
     var body: some View {
@@ -45,6 +49,14 @@ struct ContentView: View {
                 
                 Spacer()
                 
+                VStack {
+                    Text("\(score)")
+                        .foregroundColor(.white)
+                        .font(.largeTitle)
+                }
+                
+                Spacer()
+                
                 Button(action: {
                     restartTapped()
                 }) {
@@ -52,28 +64,33 @@ struct ContentView: View {
                 }
             }
         }
-        .alert(isPresented: $showingScore) {
-            Alert(title: Text(scoreTitle), message: Text("Your score is \(score)"), dismissButton: .default(Text("Continue")) {
-                self.askQuestion()
-            })
+        .alert(isPresented: $showAlert) {
+            switch activeAlert {
+            case .score:
+                return Alert(title: Text(scoreTitle), message: Text(scoreMessage), dismissButton: .default(Text("Continue")) {
+                    self.askQuestion()
+                })
+            case .restart:
+                return Alert(title: Text("Restart"), message: Text("You started a new game!"), dismissButton: .default(Text("OK")) {
+                    self.askQuestion()
+                })
+            }
         }
-//        .alert(isPresented: $showRestart) {
-//            Alert(title: Text("Restart"), message: Text("You started a new game!"), dismissButton: .default(Text("OK")) {
-//                self.askQuestion()
-//            })
-//        }
     }
     
     func flagTapped(_ number: Int) {
         if number == correctAnswer {
-            scoreTitle = "Correct"
             score += 1
+            scoreTitle = "Correct"
+            scoreMessage = "Your score is \(score)"
         } else {
-            scoreTitle = "Wrong"
             score -= 1
+            scoreTitle = "Wrong"
+            scoreMessage = "Too bad, that's the flag of \(countries[number])"
         }
         
-        showingScore = true
+        activeAlert = .score
+        showAlert = true
     }
     
     func askQuestion() {
@@ -82,7 +99,8 @@ struct ContentView: View {
     }
     
     func restartTapped() {
-        showRestart = true
+        activeAlert = .restart
+        showAlert = true
         score = 0
     }
 }
