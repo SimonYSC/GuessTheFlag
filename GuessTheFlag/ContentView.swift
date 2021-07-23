@@ -11,6 +11,18 @@ enum AlertType {
     case score, restart
 }
 
+struct FlagImage: View {
+    let name: String
+    
+    var body: some View {
+        Image(name)
+            .renderingMode(.original)
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(Color.black, lineWidth: 1))
+            .shadow(color: .black, radius: 2)
+    }
+}
+
 struct ContentView: View {
     @State private var countries = ["Estonia", "France", "Germany", "Ireland", "Italy", "Nigeria", "Monaco", "Poland", "Russia", "Spain", "UK", "US"].shuffled()
     
@@ -20,6 +32,8 @@ struct ContentView: View {
     @State private var scoreTitle = ""
     @State private var scoreMessage = ""
     @State private var score = 0
+    @State private var rotateAmount = [0.0, 0.0, 0.0]
+    @State private var opacityAmount = [1.0, 1.0, 1.0]
     
     var body: some View {
         ZStack {
@@ -39,12 +53,19 @@ struct ContentView: View {
                     Button(action: {
                         self.flagTapped(number)
                     }) {
-                        Image(self.countries[number])
-                            .renderingMode(.original)
-                            .clipShape(Capsule())
-                            .overlay(Capsule().stroke(Color.black, lineWidth: 1))
-                            .shadow(color: .black, radius: 2)
+//                        Image(self.countries[number])
+//                            .renderingMode(.original)
+//                            .clipShape(Capsule())
+//                            .overlay(Capsule().stroke(Color.black, lineWidth: 1))
+//                            .shadow(color: .black, radius: 2)
+                        FlagImage(name: self.countries[number])
                     }
+                    .opacity(opacityAmount[number])
+                    .animation(.default)
+                    .rotation3DEffect(
+                        .degrees(rotateAmount[number]),
+                        axis: (x: 0, y: 1, z: 0)
+                    )
                 }
                 
                 Spacer()
@@ -83,6 +104,14 @@ struct ContentView: View {
             score += 1
             scoreTitle = "Correct"
             scoreMessage = "Your score is \(score)"
+            withAnimation {
+                rotateAmount[number] += 360
+            }
+            for num in 0..<opacityAmount.count {
+                if num != number {
+                    opacityAmount[num] -= 0.25
+                }
+            }
         } else {
             score -= 1
             scoreTitle = "Wrong"
@@ -96,6 +125,7 @@ struct ContentView: View {
     func askQuestion() {
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
+        opacityAmount = [1.0, 1.0, 1.0]
     }
     
     func restartTapped() {
